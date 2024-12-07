@@ -1,5 +1,5 @@
 # MNIST Digit Classification with PyTorch
-![ML Pipeline](https://github.com/ViksML/mist-back-propagation/workflows/ML%20Pipeline/badge.svg)
+![ML Pipeline](https://github.com/ViksML/mist-back-propagation/workflows/model_tests/badge.svg)
 This project implements a Convolutional Neural Network (CNN) for classifying handwritten digits from the MNIST dataset using PyTorch.
 
 ## Model Architecture
