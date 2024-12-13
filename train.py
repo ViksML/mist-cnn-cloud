@@ -20,34 +20,56 @@ else:
 
 print(f"Using device: {device}")
 
-torch.manual_seed(42)
+torch.manual_seed(1)
 
 train_transform = transforms.Compose(
                     [
                     transforms.RandomAffine(degrees=7, translate=(0.1,0.1)),
-                    transforms.ColorJitter(brightness=0.2, contrast=0.2),
+                    transforms.Resize((28, 28)),
+                    transforms.ColorJitter(brightness=0.10, contrast=0.1, saturation=0.10, hue=0.1),
+                    transforms.RandomRotation((-7.0, 7.0), fill=(1,)), 
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5,), (0.5,)),
+                    transforms.Normalize((0.1307,), (0.3081,))
                     ])
 
 test_transform = transforms.Compose(
                     [
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5,), (0.5,)),
+                    transforms.Normalize((0.1307,), (0.3081,))
                     ])
 
 def train_model(model, device, train_loader, optimizer, scheduler, criterion, epoch):
     model.train()
     pbar = tqdm(train_loader)
+    train_loss = 0
+    correct = 0
+    processed = 0
+    
     for batch_idx, (data, target) in enumerate(pbar):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
+        train_loss += loss.item()
+        
+        # Calculate Training Accuracy
+        pred = output.argmax(dim=1, keepdim=True)
+        correct += pred.eq(target.view_as(pred)).sum().item()
+        processed += len(data)
+        
         loss.backward()
         optimizer.step()
         scheduler.step()
-        pbar.set_description(desc= f'Training Model: loss={loss.item():.4f} batch_id={batch_idx}')
+        
+        pbar.set_description(desc= f'Training Model: Loss={loss.item():.4f} Batch={batch_idx} Accuracy={100*correct/processed:.2f}%')
+    
+    # Print epoch summary
+    train_loss /= len(train_loader.dataset)
+    print('Training: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)'.format(
+        train_loss, correct, len(train_loader.dataset),
+        100. * correct / len(train_loader.dataset)))
+    
+    return correct / len(train_loader.dataset)
 
 def test_model(model, device, test_loader, criterion, epoch):
     model.eval()
@@ -69,7 +91,7 @@ def test_model(model, device, test_loader, criterion, epoch):
     return correct / len(test_loader.dataset)
         
 def load_data():
-    batch_size = 24
+    batch_size = 125
     train_dataset = datasets.MNIST('../data', train=True, download=True, transform=train_transform)
     test_dataset = datasets.MNIST('../data', train=False, transform=test_transform)
     
@@ -94,7 +116,7 @@ def main():
     scheduler = OneCycleLR(
         optimizer,
         max_lr=0.01,
-        epochs=20,
+        epochs=15,
         steps_per_epoch=len(train_loader),
         pct_start=0.2,
         div_factor=10,
@@ -103,14 +125,14 @@ def main():
 
     epoc_id = 0
     best_acc_test = 0
-    for epoch in range(1, 21):
+    for epoch in range(1, 16):
         print(f'Epoch: {epoch}')
 
-        train_model(model, device, train_loader, optimizer, scheduler, criterion, epoch)
-        acc_test = test_model(model, device, test_loader, criterion, epoch)
+        train_acc = train_model(model, device, train_loader, optimizer, scheduler, criterion, epoch)
+        test_acc = test_model(model, device, test_loader, criterion, epoch)
         
-        if acc_test > best_acc_test:
-            best_acc_test = acc_test
+        if test_acc > best_acc_test:
+            best_acc_test = test_acc
             epoc_id = epoch
             # Save best model
             torch.save(model.state_dict(), 'model.pth')

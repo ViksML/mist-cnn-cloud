@@ -18,7 +18,7 @@ class Net(nn.Module):
             nn.ReLU(),
             nn.BatchNorm2d(8),
             nn.MaxPool2d(2, 2),
-            nn.Dropout(0.1)  # Reduced dropout
+            nn.Dropout(0.1)
         )
 
         # Second block - increase feature complexity
