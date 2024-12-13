@@ -5,7 +5,10 @@ import torch.nn.functional as F
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-
+        
+        # Use float32 for better compatibility with Metal
+        self.dtype = torch.float32
+        
         # First block - extract basic features
         self.conv1 = nn.Sequential(
             nn.Conv2d(1, 8, 3, padding=1),  

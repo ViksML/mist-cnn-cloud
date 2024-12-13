@@ -10,6 +10,16 @@ from tqdm import tqdm
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import OneCycleLR
 
+# Check for Metal device
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+elif torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
+print(f"Using device: {device}")
+
 torch.manual_seed(42)
 
 train_transform = transforms.Compose(
@@ -69,10 +79,13 @@ def load_data():
     return train_loader, test_loader
 
 def main():
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = Net().to(device)
 
-    summary(model, input_size=(1, 28, 28))
+    # Move summary to CPU since torchsummary has issues with MPS
+    summary(model.to('cpu'), input_size=(1, 28, 28))
+    
+    # Move model back to MPS device
+    model = model.to(device)
     
     criterion = nn.CrossEntropyLoss()
     train_loader, test_loader = load_data()
@@ -93,13 +106,13 @@ def main():
     for epoch in range(1, 21):
         print(f'Epoch: {epoch}')
 
-        train_model(model, device, train_loader, optimizer, scheduler,criterion, epoch)
-        acc_test = test_model(model, device, test_loader,criterion, epoch)
+        train_model(model, device, train_loader, optimizer, scheduler, criterion, epoch)
+        acc_test = test_model(model, device, test_loader, criterion, epoch)
         
         if acc_test > best_acc_test:
             best_acc_test = acc_test
             epoc_id = epoch
-            #Save best model
+            # Save best model
             torch.save(model.state_dict(), 'model.pth')
 
     print(f'Best test Accuracy Achieved: {best_acc_test * 100:.2f}%, Epoch: {epoc_id}')

@@ -3,11 +3,17 @@ import torch.nn as nn
 from model import Net
 import pytest
 
+# Check for Metal device
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
+
 class ModelTests:
     @staticmethod
     def test_parameter_count():
         """Test 1: Verify total parameters are less than 20k"""
-        model = Net()
+        model = Net().to(device)
         total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         assert total_params < 20000, f"Model has {total_params} parameters, should be < 20000"
         print(f"\nTest 1 Passed ✅ - Total parameters: {total_params}")
@@ -16,7 +22,7 @@ class ModelTests:
     @staticmethod
     def test_batch_normalization():
         """Test 2: Verify the use of Batch Normalization"""
-        model = Net()
+        model = Net().to(device)
         has_batchnorm = False
         bn_count = 0
         for module in model.modules():
@@ -30,7 +36,7 @@ class ModelTests:
     @staticmethod
     def test_dropout():
         """Test 3: Verify the use of Dropout"""
-        model = Net()
+        model = Net().to(device)
         has_dropout = False
         dropout_count = 0
         for module in model.modules():
@@ -44,7 +50,7 @@ class ModelTests:
     @staticmethod
     def test_fully_connected():
         """Test 4: Verify the use of Fully Connected layer or GAP"""
-        model = Net()
+        model = Net().to(device)
         has_fc = False
         fc_count = 0
         for module in model.modules():
