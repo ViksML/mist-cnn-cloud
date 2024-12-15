@@ -15,7 +15,7 @@ class ModelTests:
         """Test 1: Verify total parameters are less than 20k"""
         model = Net().to(device)
         total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-        assert total_params < 20000, f"Model has {total_params} parameters, should be < 20000"
+        assert total_params < 8000, f"Model has {total_params} parameters, should be < 8000"
         print(f"\nTest 1 Passed ✅ - Total parameters: {total_params}")
         return total_params
 
@@ -48,18 +48,16 @@ class ModelTests:
         return dropout_count
 
     @staticmethod
-    def test_fully_connected():
-        """Test 4: Verify the use of Fully Connected layer or GAP"""
+    def test_gap_layer():
+        """Test 4: Verify the use of Global Average Pooling layer"""
         model = Net().to(device)
-        has_fc = False
-        fc_count = 0
+        gap_count = 0
         for module in model.modules():
-            if isinstance(module, nn.Linear):
-                has_fc = True
-                fc_count += 1
-        assert has_fc, "Model should use either Fully Connected layer or GAP"
-        print(f"Test 4 Passed ✅ - Found {fc_count} Fully Connected layers")
-        return fc_count
+            if isinstance(module, nn.AdaptiveAvgPool2d):
+                gap_count += 1
+        assert gap_count > 0, "Model should use Global Average Pooling layer"
+        print(f"Test 4 Passed ✅ - Found {gap_count} Global Average Pooling layers")
+        return gap_count
 
 def run_tests():
     """Run all tests and generate report"""
@@ -71,7 +69,7 @@ def run_tests():
             "parameters": ModelTests.test_parameter_count(),
             "batch_norm": ModelTests.test_batch_normalization(),
             "dropout": ModelTests.test_dropout(),
-            "fc_layers": ModelTests.test_fully_connected()
+            "gap_layers": ModelTests.test_gap_layer()
         }
         
         print("\nTest Summary:")
@@ -79,7 +77,7 @@ def run_tests():
         print(f"Total Parameters: {results['parameters']} (< 20k)")
         print(f"Batch Norm Layers: {results['batch_norm']}")
         print(f"Dropout Layers: {results['dropout']}")
-        print(f"Fully Connected Layers: {results['fc_layers']}")
+        print(f"Global Average Pooling Layers: {results['gap_layers']}")
         print("\nAll tests passed successfully! ✅")
         
     except AssertionError as e:
