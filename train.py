@@ -10,8 +10,6 @@ from tqdm import tqdm
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import OneCycleLR
 
-EPOCHS=15
-
 # Check for Metal device
 if torch.backends.mps.is_available():
     device = torch.device("mps")
@@ -19,25 +17,25 @@ elif torch.cuda.is_available():
     device = torch.device("cuda")
 else:
     device = torch.device("cpu")
+
 print(f"Using device: {device}")
 
 torch.manual_seed(1)
 
 train_transform = transforms.Compose(
                     [
-                    # transforms.RandomAffine(degrees=7, translate=(0.1,0.1)),
-                    #transforms.RandomRotation(5),
-                    # transforms.ColorJitter(brightness=0.10, contrast=0.1, saturation=0.10, hue=0.1),
+                    transforms.RandomAffine(degrees=7, translate=(0.1,0.1)),
                     transforms.Resize((28, 28)),
+                    transforms.ColorJitter(brightness=0.10, contrast=0.1, saturation=0.10, hue=0.1),
                     transforms.RandomRotation((-7.0, 7.0), fill=(1,)), 
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5,), (0.5,))
+                    transforms.Normalize((0.1307,), (0.3081,))
                     ])
 
 test_transform = transforms.Compose(
                     [
                     transforms.ToTensor(),
-                    transforms.Normalize((0.5,), (0.5,))
+                    transforms.Normalize((0.1307,), (0.3081,))
                     ])
 
 def train_model(model, device, train_loader, optimizer, scheduler, criterion, epoch):
@@ -93,12 +91,12 @@ def test_model(model, device, test_loader, criterion, epoch):
     return correct / len(test_loader.dataset)
         
 def load_data():
-    BATCH_SIZE=16
+    batch_size = 125
     train_dataset = datasets.MNIST('../data', train=True, download=True, transform=train_transform)
     test_dataset = datasets.MNIST('../data', train=False, transform=test_transform)
     
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
     return train_loader, test_loader
 
@@ -107,22 +105,27 @@ def main():
 
     # Move summary to CPU since torchsummary has issues with MPS
     summary(model.to('cpu'), input_size=(1, 28, 28))
-
+    
     # Move model back to MPS device
     model = model.to(device)
     
     criterion = nn.CrossEntropyLoss()
     train_loader, test_loader = load_data()
 
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=0.01,epochs=EPOCHS,steps_per_epoch=len(train_loader))
-
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    scheduler = OneCycleLR(
+        optimizer,
+        max_lr=0.01,
+        epochs=15,
+        steps_per_epoch=len(train_loader),
+        pct_start=0.2,
+        div_factor=10,
+        final_div_factor=100
+    )
 
     epoc_id = 0
     best_acc_test = 0
-    max_epochs =  EPOCHS + 1
-    for epoch in range(1, max_epochs):
+    for epoch in range(1, 16):
         print(f'Epoch: {epoch}')
 
         train_acc = train_model(model, device, train_loader, optimizer, scheduler, criterion, epoch)
