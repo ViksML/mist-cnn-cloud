@@ -9,6 +9,7 @@ from torchsummary import summary
 from tqdm import tqdm
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import OneCycleLR
+import os
 
 EPOCHS=15
 
@@ -103,6 +104,8 @@ def load_data():
     return train_loader, test_loader
 
 def main():
+    os.makedirs('models', exist_ok=True)
+    
     model = Net().to(device)
 
     # Move summary to CPU since torchsummary has issues with MPS
@@ -131,8 +134,8 @@ def main():
         if test_acc > best_acc_test:
             best_acc_test = test_acc
             epoc_id = epoch
-            # Save best model
-            torch.save(model.state_dict(), 'model.pth')
+            # Save best model in models folder
+            torch.save(model.state_dict(), 'models/model.pth')
 
     print(f'Best test Accuracy Achieved: {best_acc_test * 100:.2f}%, Epoch: {epoc_id}')
 

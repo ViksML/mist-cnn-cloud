@@ -129,14 +129,20 @@ The project includes automated tests to verify model architecture requirements:
 All tests passed successfully! ✅
 
 ## Project Structure
-├── model.py          # CNN model architecture
-├── train.py         # Training and evaluation code
-├── test.py          # Model architecture tests
-├── requirements.txt # Project dependencies
+project/
+├── models/
+│   ├── __init__.py
+│   ├── model.py        # CNN model architecture
+│   └── model.pth       # Trained model weights
+├── tests/
+│   ├── __init__.py
+│   └── test_model.py   # Model architecture tests
+├── model_train.py     # Training and evaluation code
+├── requirements.txt   # Project dependencies
 ├── .github/
 │   └── workflows/
 │       └── model_tests.yml  # GitHub Actions workflow
-└── README.md        # Project documentation
+└── README.md         # Project documentation
 
 ## Installation & Usage
 1. Install dependencies:
@@ -144,10 +150,10 @@ pip install -r requirements.txt
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 2. Run training:
-python train.py
+python model_train.py
 
 3. Run tests:
-python test.py
+python -m tests.test_model
 
 ## License
 MIT License

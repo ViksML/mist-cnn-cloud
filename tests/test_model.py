@@ -1,7 +1,11 @@
 import torch
 import torch.nn as nn
+import sys
+import os
+
+# Add parent directory to path to import model
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from model import Net
-import pytest
 
 # Check for Metal device
 if torch.backends.mps.is_available():
@@ -74,7 +78,7 @@ def run_tests():
         
         print("\nTest Summary:")
         print("="*50)
-        print(f"Total Parameters: {results['parameters']} (< 20k)")
+        print(f"Total Parameters: {results['parameters']} (< 8000)")
         print(f"Batch Norm Layers: {results['batch_norm']}")
         print(f"Dropout Layers: {results['dropout']}")
         print(f"Global Average Pooling Layers: {results['gap_layers']}")
