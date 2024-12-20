@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import numpy as np
-from model import Net
+from model import Model_Final, Model_ReducingParams, Model_ImprovingAccuracy
 from torchsummary import summary
 from tqdm import tqdm
 import torch.nn.functional as F
@@ -26,9 +26,6 @@ torch.manual_seed(1)
 
 train_transform = transforms.Compose(
                     [
-                    # transforms.RandomAffine(degrees=7, translate=(0.1,0.1)),
-                    #transforms.RandomRotation(5),
-                    # transforms.ColorJitter(brightness=0.10, contrast=0.1, saturation=0.10, hue=0.1),
                     transforms.Resize((28, 28)),
                     transforms.RandomRotation((-7.0, 7.0), fill=(1,)), 
                     transforms.ToTensor(),
@@ -106,10 +103,14 @@ def load_data():
 def main():
     os.makedirs('models', exist_ok=True)
     
-    model = Net().to(device)
+    # Avaliable models : Model_Final, Model_ImprovingAccuracy, Model_ReducingParams
+    # model = Model_ImprovingAccuracy().to(device)
+    # model = Model_ReducingParams().to(device)
+    # model = Model_ImprovingAccuracy().to(device)
+    model = Model_Final().to(device)
 
     # Move summary to CPU since torchsummary has issues with MPS
-    summary(model.to('cpu'), input_size=(1, 28, 28))
+    summary(model.to('cpu'), input_size=(1, 28, 28))    
 
     # Move model back to MPS device
     model = model.to(device)
@@ -118,7 +119,7 @@ def main():
     train_loader, test_loader = load_data()
 
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,max_lr=0.01,epochs=EPOCHS,steps_per_epoch=len(train_loader))
 
 
@@ -135,7 +136,7 @@ def main():
             best_acc_test = test_acc
             epoc_id = epoch
             # Save best model in models folder
-            torch.save(model.state_dict(), 'models/model.pth')
+            torch.save(model.state_dict(), 'models/{0}'.format(model.name +'.pth'))
 
     print(f'Best test Accuracy Achieved: {best_acc_test * 100:.2f}%, Epoch: {epoc_id}')
 

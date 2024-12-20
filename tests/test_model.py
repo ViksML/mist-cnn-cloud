@@ -5,7 +5,7 @@ import os
 
 # Add parent directory to path to import model
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from model import Net
+from model import Model_Final
 
 # Check for Metal device
 if torch.backends.mps.is_available():
@@ -17,7 +17,7 @@ class ModelTests:
     @staticmethod
     def test_parameter_count():
         """Test 1: Verify total parameters are less than 20k"""
-        model = Net().to(device)
+        model = Model_Final().to(device)
         total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         assert total_params < 8000, f"Model has {total_params} parameters, should be < 8000"
         print(f"\nTest 1 Passed ✅ - Total parameters: {total_params}")
@@ -26,7 +26,7 @@ class ModelTests:
     @staticmethod
     def test_batch_normalization():
         """Test 2: Verify the use of Batch Normalization"""
-        model = Net().to(device)
+        model = Model_Final().to(device)
         has_batchnorm = False
         bn_count = 0
         for module in model.modules():
@@ -40,7 +40,7 @@ class ModelTests:
     @staticmethod
     def test_dropout():
         """Test 3: Verify the use of Dropout"""
-        model = Net().to(device)
+        model = Model_Final().to(device)
         has_dropout = False
         dropout_count = 0
         for module in model.modules():
@@ -54,7 +54,7 @@ class ModelTests:
     @staticmethod
     def test_gap_layer():
         """Test 4: Verify the use of Global Average Pooling layer"""
-        model = Net().to(device)
+        model = Model_Final().to(device)
         gap_count = 0
         for module in model.modules():
             if isinstance(module, nn.AdaptiveAvgPool2d):
